@@ -1660,13 +1660,14 @@
   }
 
   /* =========================================================
-     INTRO — patrón Aurelia: video plays once → cross-fade → page
+     INTRO — patrón Aurelia: video fullscreen → cross-fade → page
+     Video: object-fit cover (sin bordes visibles, fit-to-screen)
      ========================================================= */
   .lux-intro {
     position: fixed; inset: 0;
     z-index: 10000;
     background: var(--canvas);
-    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
     cursor: pointer;
     transition: opacity 1.2s cubic-bezier(0.87, 0, 0.13, 1), visibility 1.2s ease;
   }
@@ -1676,53 +1677,58 @@
     pointer-events: none;
   }
   .lux-intro__video {
-    width: 100%; height: 100%;
-    object-fit: contain;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
     display: block;
   }
   .lux-intro__skip {
     position: absolute;
     bottom: 32px; right: 32px;
+    z-index: 2;
     background: rgba(26,24,21,0.06);
     border: 1px solid rgba(26,24,21,0.25);
     color: var(--ink);
-    padding: 10px 20px;
+    padding: 11px 22px;
     font-family: var(--sans);
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 0.2em; text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     cursor: pointer;
     border-radius: 999px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: background 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
     opacity: 0;
     animation: introSkipFadeIn 0.6s ease 1.2s forwards;
   }
   .lux-intro__skip:hover {
-    background: rgba(26,24,21,0.10);
-    transform: translateY(-1px);
+    background: rgba(26,24,21,0.12);
+    transform: translateY(-2px);
+    border-color: var(--ink);
   }
   @keyframes introSkipFadeIn {
     to { opacity: 0.85; }
   }
   @media (max-width: 640px) {
-    .lux-intro__skip { bottom: 24px; right: 24px; padding: 8px 16px; font-size: 10px; }
+    .lux-intro__skip {
+      bottom: 22px; right: 22px;
+      padding: 9px 18px;
+      font-size: 10px;
+    }
   }
 
-  /* === Cross-fade: TODO lo no-intro arranca invisible === */
+  /* Cross-fade: TODO lo que no es .lux-intro arranca invisible */
   body > *:not(.lux-intro) {
     opacity: 0;
     transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
   }
   body.site-revealed > *:not(.lux-intro) {
     opacity: 1;
-  }
-
-  /* === Hero poster: último frame del video como bg === */
-  .hero-video-bg {
-    background-image: url('assets/img/hero-poster.jpg');
-    background-size: cover;
-    background-position: center;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1752,9 +1758,9 @@
   <div class="top-marquee-track" id="topMarqueeTrack"></div>
 </div>
 
-<!-- INTRO: video plays once → cross-fade → home page (patrón Aurelia) -->
+<!-- INTRO: video fullscreen plays once → cross-fade → home page -->
 <div class="lux-intro" id="luxIntro">
-  <video class="lux-intro__video" id="heroVideo" autoplay muted playsinline preload="auto">
+  <video class="lux-intro__video" id="introVideo" autoplay muted playsinline preload="auto">
     <source src="assets/img/video-01.mp4" type="video/mp4">
   </video>
   <button class="lux-intro__skip" id="luxIntroSkip" type="button" aria-label="Skip intro">SKIP</button>
@@ -1781,7 +1787,11 @@
 
   <!-- ============== HERO ============== -->
   <section id="inicio" class="hero">
-  <div class="hero-video-bg" aria-hidden="true"></div>
+  <div class="hero-video-bg" aria-hidden="true">
+    <video autoplay muted loop playsinline preload="auto" id="bgVideo">
+      <source src="assets/img/video-01.mp4" type="video/mp4">
+    </video>
+  </div>
     <div class="hero-watermark" aria-hidden="true"><span id="heroWatermark">JEWELRY</span></div>
     <div class="hero-sparkles" id="heroSparkles" aria-hidden="true"></div>
 
@@ -2114,12 +2124,14 @@
 
 <script>
   // ============================
-  // INTRO — patrón Aurelia (video → cross-fade → page)
+  // INTRO — patrón Aurelia exacto
+  // Video plays once → cross-fade smooth → home page
   // ============================
   (function initIntro() {
     const introEl = document.getElementById('luxIntro');
-    const introVideo = document.getElementById('heroVideo');
+    const introVideo = document.getElementById('introVideo');
     const introSkip = document.getElementById('luxIntroSkip');
+    const bgVideo = document.getElementById('bgVideo');
     if (!introEl || !introVideo) return;
 
     const dismissIntro = () => {
@@ -2127,22 +2139,38 @@
       introEl.classList.add('lux-intro--gone');
       document.body.classList.add('site-revealed');
       document.body.style.overflow = '';
+      // El bg video ya viene reproduciéndose desde el load; aseguramos que está corriendo
+      if (bgVideo) {
+        try { bgVideo.play().catch(() => {}); } catch(e) {}
+      }
       setTimeout(() => { introEl.remove(); }, 1300);
     };
 
     document.body.style.overflow = 'hidden';
     introVideo.addEventListener('ended', dismissIntro);
     introVideo.addEventListener('error', dismissIntro);
-    if (introSkip) introSkip.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dismissIntro();
-    });
+
+    if (introSkip) {
+      introSkip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dismissIntro();
+      });
+    }
     introEl.addEventListener('click', (e) => {
       if (e.target === introSkip || (introSkip && introSkip.contains(e.target))) return;
-      if (introVideo.currentTime > 6) dismissIntro();
+      if (introVideo.currentTime > 5) dismissIntro();
     });
-    setTimeout(() => { if (!introVideo.ended && introVideo.paused) dismissIntro(); }, 14000);
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) dismissIntro();
+
+    // Fallback: si algo falla, salir a los 14s
+    setTimeout(() => {
+      if (!introVideo.ended && (introVideo.paused || introVideo.readyState < 3)) {
+        dismissIntro();
+      }
+    }, 14000);
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      dismissIntro();
+    }
   })();
 
   // ============================
