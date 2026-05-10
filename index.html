@@ -222,58 +222,28 @@
     padding-top: 180px; padding-bottom: 60px;
     position: relative;
   }
-  /* video de fondo del hero — integrado a la paleta editorial */
+  /* HERO BG — último frame del video como poster estático (estilo Aurelia) */
   .hero-video-bg {
     position: absolute;
     inset: 0;
     overflow: hidden;
     z-index: 0;
     pointer-events: none;
-    background: var(--bg);
+    background-color: var(--canvas);
+    background-image: url('assets/img/hero-poster.jpg');
+    background-size: cover;
+    background-position: center;
   }
-  .hero-video-bg video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* tinte cálido editorial: el video se vuelve dorado/sepia desaturado para empatar con la paleta */
-    filter: sepia(0.35) saturate(0.7) contrast(0.92) brightness(0.95) hue-rotate(-8deg);
-    opacity: 0.78;
-    mix-blend-mode: multiply;
-  }
-  /* primera capa: tinte dorado-crema sobre el video */
-  .hero-video-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(60% 70% at 50% 45%, rgba(220, 195, 145, 0.18) 0%, transparent 70%),
-      linear-gradient(180deg, rgba(247,243,235,0.30) 0%, rgba(247,243,235,0.10) 30%, rgba(247,243,235,0.10) 70%, rgba(247,243,235,0.40) 100%);
-    pointer-events: none;
-    z-index: 1;
-  }
-  /* segunda capa: viñeteo cálido para que el texto del headline tenga contraste donde lo necesita */
+  /* Vignette sutil para profundidad (no muy oscuro, es cream bg) */
   .hero-video-bg::after {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(180deg,
-        var(--bg) 0%,
-        rgba(247,243,235,0.55) 16%,
-        rgba(247,243,235,0.25) 38%,
-        rgba(247,243,235,0.25) 62%,
-        rgba(247,243,235,0.65) 86%,
-        var(--bg) 100%
-      ),
-      radial-gradient(120% 90% at 28% 50%, transparent 0%, rgba(247,243,235,0.45) 70%);
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(26,24,21,0.18) 100%);
     pointer-events: none;
-    z-index: 2;
+    z-index: 1;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .hero-video-bg video { display: none; }
-  }
+
   .hero-watermark {
     position: absolute;
     inset: 0;
